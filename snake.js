@@ -1,62 +1,58 @@
-class Snake {
+import { getInputDirection } from "./input.js"
 
-  constructor() {
-    this.body = [];
-    this.body[0] = createVector(floor(w/2), floor(h/2));
-    this.xdir = 0;
-    this.ydir = 0;
-    this.len = 0;
+export const SNAKE_SPEED = 5
+const snakeBody = [{ x: 11, y: 11 }]
+let newSegments = 0
+
+export function update() {
+  addSegments()
+
+  const inputDirection = getInputDirection()
+  for (let i = snakeBody.length - 2; i >= 0; i--) {
+    snakeBody[i + 1] = { ...snakeBody[i] }
   }
 
-  setDir(x, y) {
-    this.xdir = x;
-    this.ydir = y;
+  snakeBody[0].x += inputDirection.x
+  snakeBody[0].y += inputDirection.y
+}
+
+export function draw(gameBoard) {
+  snakeBody.forEach(segment => {
+    const snakeElement = document.createElement('div')
+    snakeElement.style.gridRowStart = segment.y
+    snakeElement.style.gridColumnStart = segment.x
+    snakeElement.classList.add('snake')
+    gameBoard.appendChild(snakeElement)
+  })
+}
+
+export function expandSnake(amount) {
+  newSegments += amount
+}
+
+export function onSnake(position, { ignoreHead = false } = {}) {
+  return snakeBody.some((segment, index) => {
+    if (ignoreHead && index === 0) return false
+    return equalPositions(segment, position)
+  })
+}
+
+export function getSnakeHead() {
+  return snakeBody[0]
+}
+
+export function snakeIntersection() {
+  return onSnake(snakeBody[0], { ignoreHead: true })
+}
+
+function equalPositions(pos1, pos2) {
+  return pos1.x === pos2.x && pos1.y === pos2.y
+}
+
+function addSegments() {
+  for (let i = 0; i < newSegments; i++) {
+    snakeBody.push({ ...snakeBody[snakeBody.length - 1] })
   }
 
-  update() {
-    let head = this.body[this.body.length-1].copy();
-    this.body.shift();
-    head.x += this.xdir;
-    head.y += this.ydir;
-    this.body.push(head);
-  }
-
-  grow() {
-    let head = this.body[this.body.length-1].copy();
-    this.len++;
-    this.body.push(head);
-  }
-
-  endGame() {
-    let x = this.body[this.body.length-1].x;
-    let y = this.body[this.body.length-1].y;
-    if(x > w-1 || x < 0 || y > h-1 || y < 0) {
-      return true;
-    }
-    for(let i = 0; i < this.body.length-1; i++) {
-        let part = this.body[i];
-      if(part.x == x && part.y == y) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  eat(pos) {
-    let x = this.body[this.body.length-1].x;
-    let y = this.body[this.body.length-1].y;
-    if(x == pos.x && y == pos.y) {
-      this.grow();
-      return true;
-    }
-    return false;
-  }
-
-  show() {
-    for(let i = 0; i < this.body.length; i++) {
-      fill(0);
-      noStroke();
-      rect(this.body[i].x, this.body[i].y, 1, 1)
-    }
-  }
+  newSegments = 0
 }
